@@ -137,3 +137,43 @@ export type Merge<A, B> = {
 
 [Github Link](https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650)
 [calls `isTypeIdenticalTo`](https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-510924206) under the hood.
+
+## Tuple Operations
+
+```ts
+// Tuple stuff
+
+type Pushed<Arr extends readonly unknown[], Item> = [...Arr, Item];
+type Popped<Arr extends readonly unknown[]> = Arr extends Pushed<
+    infer Popped,
+    any
+>
+    ? Popped
+    : never;
+type Unshifted<Arr extends readonly unknown[], Item> = [Item, ...Arr];
+type Shifted<Arr extends readonly unknown[]> = Arr extends Unshifted<
+    infer Shifted,
+    any
+>
+    ? Shifted
+    : never;
+
+type Tuple<T, N extends number, Res extends readonly unknown[] = []> = {
+    out: Res;
+    rec: Tuple<T, N, Pushed<Res, T>>;
+}[Res["length"] extends N ? "out" : "rec"];
+
+import { Expect, Equal } from "@type-challenges/utils";
+
+type tests = [
+    Expect<Equal<Pushed<[1, 2, 3], 4>, [1, 2, 3, 4]>>,
+    Expect<Equal<Popped<[1, 2, 3]>, [1, 2]>>,
+    Expect<Equal<Unshifted<[1, 2, 3], 4>, [4, 1, 2, 3]>>,
+    Expect<Equal<Shifted<[1, 2, 3]>, [2, 3]>>,
+    Expect<Equal<Tuple<number, 3>, [number, number, number]>>,
+    // @ts-expect-error: recursion limit exceeded
+    Tuple<any, 45>
+];
+```
+
+[Playground Link](https://www.typescriptlang.org/play?#code/PTAEBUFcAcBsFNQGcAukBm6BQWUE9pEAFSJAC3gBMAeAQQCd7R4APFeAO0qVHvgENKAew6w8oSBwDWHIQHcOAbQC6AGlABJdgFsAfKAC8oRQDozDeuq3xtygNy4CxIdEI0LzNp268Bw0eKSMvJKyvpGHqzsXDwk5FTUWKDJoACWHOjwTEQubqpJKfwceFi6BckA-KA5rlTloABcoBzwAG5ZDviEoACqHOSp6OzujJ7RPnyCImIS0rIKKlY64cbW2upmJhb2jt0AymSDw3SjUd48k-4zQfOhK5FeMb39h0MJ9emZTAdHVPkpoCKJTKAKqPzelHqTRa7XoDl2iCgcHg1HA6gAcmNzs1INoAEZZdQAJXgPDOT0u00CcxCKkMxjC9IA3vUhJAUE0SUgHAC+ABjJpIhCojHqOIUGhc9TgXS6BwAX0UXMUACIEBwAOYoMgq5RYp6YqoqtkoFWNUAq-m6+GpbTQIT0FCgJmgACiLEIfJQ6ldAEdIPxYKB5aB0PQhNoLQABLrwAC0fLIgfVGtJwHZqVgSBV8NjoHYqB4RkU9XdnpQ1D9Adg1HFCUUAEZ1AAmdQAZjUoAALLp1I2W+31F2wr3Sx74F7K-7A7XcvWm6BW6AO73jAvmyP-ikyxOK1WZ30BhDqP3F+3Oz2+131Ovz7Kt8kd5P9zXwcdT0uV33P5ux+Wp9WqIwMKHC4gSljLquiigfihI4rBEEweBv4AiAoAxkgcasOWWGMA6TT8pA9BIKkIigLAtqpE6rB8vAVB1ACQookCQ4AKxlPYQA)
