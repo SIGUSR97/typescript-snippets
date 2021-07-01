@@ -158,10 +158,39 @@ type Shifted<Arr extends readonly unknown[]> = Arr extends Unshifted<
     ? Shifted
     : never;
 
-type Tuple<T, N extends number, Res extends readonly unknown[] = []> = {
-    out: Res;
-    rec: Tuple<T, N, Pushed<Res, T>>;
-}[Res["length"] extends N ? "out" : "rec"];
+type Equal<X, Y> =
+    (<T>() => T extends X ? 1 : 2) extends
+    (<T>() => T extends Y ? 1 : 2) ? true : false;
+
+type IfEqual<A, B, Then, Else> =
+    Equal<A, B> extends true
+        ? Then
+        : Else;
+
+// https://github.com/type-challenges/type-challenges/issues/1676
+type Digital = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+
+type RecTuple<
+    T,
+    N extends number | string,
+    A extends unknown[] = []
+> = `${N}` extends `${A['length']}` ? A : RecTuple<T, N, [...A, T]>;
+
+type TupleTimes10<T extends unknown[]> = [...T,...T,...T,...T,...T,...T,...T,...T,...T,...T];
+
+type Tuple<
+    T,
+    N extends number | string,
+    A extends unknown[] = [],
+> = IfEqual<
+        /* N == number */ N, number,
+        /* Then */ T[],
+        /* Else */ `${N}` extends `${infer S1}${infer S2}`
+            ? S1 extends Digital
+                ? Tuple<T, S2, [...TupleTimes10<A>, ...RecTuple<T, S1>]>
+                : never
+            : A
+    >;
 
 import { Expect, Equal } from "@type-challenges/utils";
 
